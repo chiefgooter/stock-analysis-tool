@@ -9,3 +9,5 @@ beautifulsoup4
 lxml
 html5lib
 streamlit-local-storage
+alpaca-trade-api
+apscheduler
