@@ -180,19 +180,28 @@ if pe and not np.isnan(pe):
 else:
     c4.metric("P/E", "N/A")
 
-# ========================= AI REPORT =========================
+# ========================= AI REPORT (FINAL FIX) =========================
 if st.button("Generate AI Hedge Fund Report (Grok-4)", type="primary"):
-    with st.spinner("Grok-4 is writing your report..."):
-        prompt = f"Professional analysis of {ticker} ({company_name}). Price ${latest_price:.2f}, AI fair value ${fv:.2f} ({upside:+.1f}%). Write in {ai_style} style with bull/bear cases."
+    with st.spinner("Grok-4 is analyzing..."):
         try:
             key = st.secrets["GROK_API_KEY"]
-            r = requests.post("https://api.x.ai/v1/chat/completions",
-                json={"model":"grok-beta","messages":[{"role":"user","content":prompt}],"temperature":0.7},
-                headers={"Authorization":f"Bearer {key}"}, timeout=30)
+            if not key or not key.startswith("xai-"):
+                st.error("Grok API key is invalid or old format. Must start with 'xai-'")
+                st.stop()
+                
+            payload = {
+                "model": "grok-beta",
+                "messages": [{"role": "user", "content": f"Analyze {ticker} ({company_name}) in {ai_style} style. Price ${latest_price:.2f}, AI fair value ${fv:.2f} ({upside:+.1f}%). Write a 300-word professional report with bull/bear cases and target."}],
+                "temperature": 0.7
+            }
+            headers = {"Authorization": f"Bearer {key}"}
+            r = requests.post("https://api.x.ai/v1/chat/completions", json=payload, headers=headers, timeout=30)
+            r.raise_for_status()
             report = r.json()["choices"][0]["message"]["content"]
-        except:
-            report = "Grok API key missing — add it in Secrets to enable AI reports."
-        st.markdown(f"<div class='ai-box'><h3>AI Hedge Fund Report</h3>{report}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='ai-box'><h3>AI Hedge Fund Report</h3>{report}</div>", unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"Grok error: {str(e)}")
+            st.info("If it says '401' or 'invalid authentication', your key is wrong or not loaded. Reboot the app after saving secrets.")
 
 # ========================= CHART =========================
 fig = make_subplots(rows=4, cols=2, shared_xaxes=True,
