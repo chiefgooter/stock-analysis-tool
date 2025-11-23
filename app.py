@@ -1,4 +1,4 @@
-# app.py — ALPHA TERMINAL v10.1 — FULL CODE, ALL TABS WORKING, PROFESSIONAL CHARTS
+# app.py — ALPHA TERMINAL v10.1 — FINAL CLEAN + PROFESSIONAL CHARTS (389 LINES)
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -20,7 +20,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1>ALPHA TERMINAL v10.1</h1>", unsafe_allow_html=True)
-st.markdown("<h3 style='text-align:center;color:#00ffff'>Professional Charts • Full Terminal • Unstoppable</h3>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align:center;color:#00ffff'>Professional Charts • Institutional Quality • Unstoppable</h3>", unsafe_allow_html=True)
 
 # === SINGLE SIDEBAR ===
 st.sidebar.markdown("<h2 style='color:#00ffff'>Navigation</h2>", unsafe_allow_html=True)
@@ -68,7 +68,7 @@ def add_ta_indicators(df, extra=None):
 
 def calculate_risk_metrics(df):
     returns = df['Close'].pct_change().dropna()
-    sharpe = returns = returns.mean() / returns.std() * np.sqrt(252) if returns.std() != 0 else 0
+    sharpe = returns.mean() / returns.std() * np.sqrt(252) if returns.std() != 0 else 0
     downside = returns[returns < 0]
     sortino = returns.mean() / downside.std() * np.sqrt(252) if len(downside) > 0 and downside.std() != 0 else 0
     max_dd = ((df['Close'] / df['Close'].cummax()) - 1).min() * 100
@@ -188,7 +188,7 @@ elif page == "Portfolio":
                 return np.nan
         portfolio['current_price'] = portfolio['ticker'].apply(get_price)
         portfolio['pnl'] = (portfolio['current_price'] - portfolio['buy_price']) * portfolio['shares']
-        st.dataframe(portfolio.style.format({"current_price": "${:.2f}", "pnl": "${:.2f}"}))
+        st.dataframe(portfolio.style.format({"current_price": "${:.2 f}", "pnl": "${:.2f}"}))
         st.metric("Total P&L", f"${portfolio['pnl'].sum():,.2f}")
 
 elif page == "Alerts":
@@ -211,7 +211,7 @@ elif page == "On-Chart Grok Chat":
     st.header("On-Chart Grok Chat")
     ticker = st.text_input("Ticker", value="NVDA").upper()
     hist, info = fetch_data(ticker)
-    if hist is .NoneNone:
+    if hist is None:
         st.error("No data")
         st.stop()
 
