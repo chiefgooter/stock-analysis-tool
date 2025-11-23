@@ -1,4 +1,4 @@
-# app.py — ALPHA TERMINAL v10.1 — FINAL CLEAN + PROFESSIONAL CHARTS (389 LINES)
+# app.py — ALPHA TERMINAL v10.1 — FULL CODE + PROFESSIONAL CHARTS (389 LINES)
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -20,7 +20,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1>ALPHA TERMINAL v10.1</h1>", unsafe_allow_html=True)
-st.markdown("<h3 style='text-align:center;color:#00ffff'>Professional Charts • Institutional Quality • Unstoppable</h3>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align:center;color:#00ffff'>Professional Charts • Full Terminal • Unstoppable</h3>", unsafe_allow_html=True)
 
 # === SINGLE SIDEBAR ===
 st.sidebar.markdown("<h2 style='color:#00ffff'>Navigation</h2>", unsafe_allow_html=True)
@@ -188,7 +188,7 @@ elif page == "Portfolio":
                 return np.nan
         portfolio['current_price'] = portfolio['ticker'].apply(get_price)
         portfolio['pnl'] = (portfolio['current_price'] - portfolio['buy_price']) * portfolio['shares']
-        st.dataframe(portfolio.style.format({"current_price": "${:.2 f}", "pnl": "${:.2f}"}))
+        st.dataframe(portfolio.style.format({"current_price": "${:.2f}", "pnl": "${:.2f}"}))
         st.metric("Total P&L", f"${portfolio['pnl'].sum():,.2f}")
 
 elif page == "Alerts":
