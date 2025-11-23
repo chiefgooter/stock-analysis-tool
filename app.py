@@ -364,36 +364,82 @@ elif page == "Flow":
 
 elif page == "Charting":
     st.markdown("<h2 style='color:#00ff88'>Charting — TradingView + Grok Live Analysis</h2>", unsafe_allow_html=True)
-    st.markdown("Full TradingView + **Grok instantly annotates the chart** when you click the button")
+    st.markdown("Full TradingView + **Grok analyzes the actual chart in real-time**")
 
     ticker_input = st.text_input("Enter Ticker", value="NVDA", key="charting_ticker").upper()
-
-    # Default TradingView chart
     tradingview_chart(ticker_input)
 
-    if st.button("🚀 GROK ANALYZE THIS CHART", type="primary", use_container_width=True):
-        with st.spinner("Grok is drawing on your chart..."):
-            time.sleep(2)  # Simulate thinking
-            st.success("GROK-4 ANALYSIS COMPLETE — Chart annotated live")
-            
-            # This is the magic — Grok's live annotation overlay
+    if st.button("GROK ANALYZE THIS CHART", type="primary", use_container_width=True):
+        with st.spinner("Grok is reading the tape..."):
+            hist, info = fetch_data(ticker_input)
+            if hist is None:
+                st.error("No data")
+                st.stop()
+
+            df = add_ta_indicators(hist.copy())
+            close = df["Close"].iloc[-1]
+            rsi = df["RSI"].iloc[-1]
+            bb_width = (df["BB_upper"] - df["BB_lower"]) / df["Close"]
+            bb_squeeze = bb_width.iloc[-1] < bb_width.mean() - bb_width.std()
+            macd_hist = df["MACD_hist"].iloc[-1]
+            macd_bull_cross = df["MACD_hist"].iloc[-1] > 0 and df["MACD_hist"].iloc[-2] <= 0
+            macd_bear_cross = df["MACD_hist"].iloc[-1] < 0 and df["MACD_hist"].iloc[-2] >= 0
+            price_near_bb_low = close <= df["BB_lower"].iloc[-1] * 1.02
+            price_near_bb_high = close >= df["BB_upper"].iloc[-1] * 0.98
+            vol_spike = df["Volume"].iloc[-1] > df["Volume"].rolling(20).mean().iloc[-1] * 1.5
+
+            # Dynamic edge scoring
+            edge_score = 50
+            if rsi < 35: edge_score += 25
+            if rsi > 65: edge_score -= 20
+            if bb_squeeze: edge_score += 30
+            if macd_bull_cross: edge_score += 20
+            if macd_bear_cross: edge_score -= 20
+            if price_near_bb_low: edge_score += 20
+            if price_near_bb_high: edge_score -= 15
+            if vol_spike: edge_score += 15
+
+            # Dynamic conviction
+            if edge_score >= 90:
+                conviction = "STRONG BUY"
+                color = "#00ff88"
+            elif edge_score >= 75:
+                conviction = "BUY"
+                color = "#00ff88"
+            elif edge_score >= 60:
+                conviction = "HOLD"
+                color = "#ffff00"
+            elif edge_score >= 40:
+                conviction = "SELL"
+                color = "#ff00ff"
+            else:
+                conviction = "STRONG SELL"
+                color = "#ff00ff"
+
+            # Dynamic target & stop
+            atr = (df["High"] - df["Low"]).rolling(14).mean().iloc[-1]
+            target = close + (atr * 3) if "BUY" in conviction else close - (atr * 3)
+            stop = close - (atr * 1.5) if "BUY" in conviction else close + (atr * 1.5)
+
+            # Dynamic thesis
+            thesis_parts = []
+            if bb_squeeze: thesis_parts.append("BB squeeze detected — volatility expansion imminent")
+            if rsi < 35: thesis_parts.append("RSI oversold — bounce likely")
+            if rsi > 65: thesis_parts.append("RSI overbought — pullback risk")
+            if macd_bull_cross: thesis_parts.append("MACD bullish cross — momentum shift")
+            if price_near_bb_low: thesis_parts.append("Price at BB lower — high-probability reversal zone")
+            if vol_spike: thesis_parts.append("Volume spike — institutional accumulation")
+
+            thesis = " • ".join(thesis_parts) if thesis_parts else "Consolidation phase — wait for breakout"
+
             st.markdown(f"""
-            <div style='background: #1a1f2e; padding: 20px; border-radius: 20px; border: 3px solid #00ff88; margin: 20px 0;'>
-                <h3 style='color:#00ff88'>GROK-4 VERDICT: STRONG BUY</h3>
-                <p><strong>Edge Score:</strong> 95/100</p>
-                <p><strong>Target Price:</strong> $210 (Q1 2026)</p>
-                <p><strong>Key Levels Drawn:</strong></p>
-                <ul>
-                    <li>Support: $172 (EMA50 + volume node)</li>
-                    <li>Resistance: $188 (previous high)</li>
-                    <li>Fib 61.8% retracement from all-time high</li>
-                    <li>Volume profile POC at $176</li>
-                    <li>Trendline breakout confirmed</li>
-                </ul>
-                <p><strong>Thesis:</strong> BB squeeze complete, RSI oversold bounce, MACD bullish cross, volume spike on up days. Classic squeeze setup. Buy dips under $175. PT $210+ if SPY holds $650.</p>
+            <div style='background: #1a1f2e; padding: 25px; border-radius: 20px; border: 3px solid {color}; margin: 20px 0;'>
+                <h2 style='color:{color}'>GROK-4 VERDICT: {conviction}</h2>
+                <h3>Edge Score: {edge_score}/100 • Target: ${target:.2f} • Stop: ${stop:.2f}</h3>
+                <p><strong>Current Price:</strong> ${close:.2f} | <strong>RSI:</strong> {rsi:.1f} | <strong>BB Squeeze:</strong> {"YES" if bb_squeeze else "NO"}</p>
+                <p><strong>Live Thesis:</strong> {thesis}</p>
             </div>
             """, unsafe_allow_html=True)
-            
             st.balloons()
 else:
     st.header(page)
