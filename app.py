@@ -71,14 +71,14 @@ def generate_grok_intel(ticker, recent_df):
         "summary": "**Edge Play:** RSI 41 + BB squeeze = dip buy. Target $200 by Q1."
     }
 
-# === CLEAN v5-STYLE SIDEBAR — NO DUPLICATES, RED DOT, BEAUTIFUL ===
-st.sidebar.markdown("# Navigation", unsafe_allow_html=True)
+# === FINAL CLEAN SIDEBAR — NO DUPLICATES, RED DOT, PERFECT (USE THIS ONLY) ===
+st.sidebar.markdown("<h2 style='color: #00ffff;'>Navigation</h2>", unsafe_allow_html=True)
 
 page = st.sidebar.radio(
     "Select page",
     [
         "Dashboard",
-        "Portfolio",
+        "Portfolio", 
         "Alerts",
         "Paper Trading",
         "Multi-Ticker",
@@ -87,6 +87,13 @@ page = st.sidebar.radio(
     ],
     label_visibility="collapsed"
 )
+
+# Single clean list with red dot — runs once
+for p in ["Dashboard", "Portfolio", "Alerts", "Paper Trading", "Multi-Ticker", "Autonomous Alpha", "On-Chart Grok Chat"]:
+    if page == p:
+        st.sidebar.markdown(f"**🔴 {p}**")
+    else:
+        st.sidebar.markdown(f"○ {p}")
 
 # Red dot + clean list — only runs once
 pages = ["Dashboard", "Portfolio", "Alerts", "Paper Trading", "Multi-Ticker", "Autonomous Alpha", "On-Chart Grok Chat"]
