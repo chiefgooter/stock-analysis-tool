@@ -71,20 +71,28 @@ def generate_grok_intel(ticker, recent_df):
         "summary": "**Edge Play:** RSI 41 + BB squeeze = dip buy. Target $200 by Q1."
     }
 
-# === v5 SIDEBAR (Exact Recreation — Red Dots, 7 Tabs) ===
-st.sidebar.markdown("# Navigation")
-page = st.sidebar.radio("Go to", [
-    "Dashboard", "Portfolio", "Alerts", "Paper Trading",
-    "Multi-Ticker", "Autonomous Alpha", "On-Chart Grok Chat"
-], label_visibility="collapsed")
+# === CLEAN v5-STYLE SIDEBAR — NO DUPLICATES, RED DOT, BEAUTIFUL ===
+st.sidebar.markdown("# Navigation", unsafe_allow_html=True)
 
+page = st.sidebar.radio(
+    "Select page",
+    [
+        "Dashboard",
+        "Portfolio",
+        "Alerts",
+        "Paper Trading",
+        "Multi-Ticker",
+        "Autonomous Alpha",
+        "On-Chart Grok Chat"
+    ],
+    label_visibility="collapsed"
+)
+
+# Red dot + clean list — only runs once
 pages = ["Dashboard", "Portfolio", "Alerts", "Paper Trading", "Multi-Ticker", "Autonomous Alpha", "On-Chart Grok Chat"]
 for p in pages:
-    if page == p:
-        st.sidebar.markdown(f"**🔴 {p}**")
-    else:
-        st.sidebar.markdown(f"○ {p}")
-
+    icon = "🔴" if page == p else "○"
+    st.sidebar.markdown(f"{icon} **{p}**" if page == p else f"{icon} {p}")
 # === TICKER PERSISTENCE (Repo-Session Glue) ===
 if 'ticker' not in st.session_state:
     st.session_state.ticker = "NVDA"
