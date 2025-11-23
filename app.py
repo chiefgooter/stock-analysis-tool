@@ -1,4 +1,4 @@
-# app.py — ALPHA TERMINAL v11.2 — FULL CODE + GROK ANALYZE FIXED + ALL TABS WORKING
+# app.py — ALPHA TERMINAL v11.2 — FULL CODE + DYNAMIC GROK ANALYZE + ALL TABS WORKING
 import streamlit as st
 from streamlit.components.v1 import html
 import yfinance as yf
@@ -18,8 +18,7 @@ st.markdown("""
     .stApp { background: #0a0e17; color: #e0e0e0; }
     h1 { font-size: 5rem; text-align: center; background: linear-gradient(90deg, #00ff88, #00ffff, #ff00ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .stMetric > div { background: #1a1f2e; border-radius: 16px; padding: 20px; border: 1px solid #2d3748; }
-    .ai-report { background: #1a1f2e; border: 3px solid #00ff88; border-radius: 20px; padding: 25px; margin: 20px 0; }
-    .flow-table { background: #1a1f2e; padding: 20px; border-radius: 16px; border: 2px solid #00ff88; }
+    .grok-analysis { background: #1a1f2e; border: 4px solid #00ff88; border-radius: 20px; padding: 25px; margin: 20px 0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -52,7 +51,7 @@ def fetch_data(ticker):
     except:
         return None, None
 
-def add_ta_indicators(df, extra=None):
+def add_ta_indicators(df):
     df["EMA20"] = ta.trend.EMAIndicator(df["Close"], window=20).ema_indicator()
     df["EMA50"] = ta.trend.EMAIndicator(df["Close"], window=50).ema_indicator()
     df["RSI"] = ta.momentum.RSIIndicator(df["Close"]).rsi()
@@ -63,10 +62,6 @@ def add_ta_indicators(df, extra=None):
     df["MACD"] = macd.macd()
     df["MACD_signal"] = macd.macd_signal()
     df["MACD_hist"] = macd.macd_diff()
-    if extra == "stoch":
-        df["Stoch"] = ta.momentum.StochasticOscillator(df["High"], df["Low"], df["Close"]).stoch()
-    if extra == "adx":
-        df["ADX"] = ta.trend.ADXIndicator(df["High"], df["Low"], df["Close"]).adx()
     return df
 
 def calculate_risk_metrics(df):
@@ -77,60 +72,6 @@ def calculate_risk_metrics(df):
     max_dd = ((df['Close'] / df['Close'].cummax()) - 1).min() * 100
     var_95 = returns.quantile(0.05)
     return {"sharpe": round(sharpe, 2), "sortino": round(sortino, 2), "max_dd": round(max_dd, 2), "var_95": var_95}
-
-# === PROFESSIONAL CHART FUNCTION ===
-def professional_chart(df, ticker, extra_indicator="None"):
-    rows = 5 if extra_indicator != "None" else 4
-    heights = [0.55, 0.15, 0.15, 0.15, 0.15] if extra_indicator != "None" else [0.55, 0.15, 0.15, 0.15]
-    fig = make_subplots(
-        rows=rows, cols=1,
-        shared_xaxes=True,
-        row_heights=heights,
-        vertical_spacing=0.02,
-        subplot_titles=(f"{ticker} — Professional Analysis", "RSI", "MACD", "Volume", extra_indicator if extra_indicator != "None" else "")
-    )
-
-    fig.add_trace(go.Candlestick(
-        x=df.index, open=df.Open, high=df.High, low=df.Low, close=df.Close,
-        name="Price",
-        increasing_line_color="#00ff88", decreasing_line_color="#ff00ff"
-    ), row=1, col=1)
-
-    fig.add_hline(y=df["Close"].iloc[-1], line=dict(color="#00ff88", width=2, dash="dot"), row=1, col=1)
-
-    fig.add_trace(go.Scatter(x=df.index, y=df.EMA20, line=dict(color="#00ffff", width=2), name="EMA20"), row=1, col=1)
-    fig.add_trace(go.Scatter(x=df.index, y=df.EMA50, line=dict(color="#ff00ff", width=2), name="EMA50"), row=1, col=1)
-
-    fig.add_trace(go.Scatter(x=df.index, y=df.BB_upper, line=dict(color="#00ffff", width=1, dash="dot"), name="BB Upper"), row=1, col=1)
-    fig.add_trace(go.Scatter(x=df.index, y=df.BB_lower, line=dict(color="#00ffff", width=1, dash="dot"), name="BB Lower",
-                             fill='tonexty', fillcolor='rgba(0,255,255,0.1)'), row=1, col=1)
-
-    fig.add_trace(go.Scatter(x=df.index, y=df.RSI, line=dict(color="#ffff00", width=2), name="RSI"), row=2, col=1)
-    fig.add_hrect(y0=70, y1=100, fillcolor="red", opacity=0.1, row=2, col=1)
-    fig.add_hrect(y0=0, y1=30, fillcolor="green", opacity=0.1, row=2, col=1)
-
-    fig.add_trace(go.Scatter(x=df.index, y=df.MACD, line=dict(color="#ff00ff", width=2), name="MACD"), row=3, col=1)
-    fig.add_trace(go.Scatter(x=df.index, y=df.MACD_signal, line=dict(color="#00ff88", width=2), name="Signal"), row=3, col=1)
-    fig.add_trace(go.Bar(x=df.index, y=df.MACD_hist, marker_color="rgba(0,255,136,0.3)"), row=3, col=1)
-
-    fig.add_trace(go.Bar(x=df.index, y=df.Volume, marker_color="rgba(0,255,255,0.3)", name="Volume"), row=4, col=1)
-
-    if extra_indicator == "Stoch":
-        fig.add_trace(go.Scatter(x=df.index, y=df.Stoch, line=dict(color="#ffaa00", width=2), name="Stoch"), row=5, col=1)
-    if extra_indicator == "ADX":
-        fig.add_trace(go.Scatter(x=df.index, y=df.ADX, line=dict(color="#ffaa00", width=2), name="ADX"), row=5, col=1)
-
-    fig.update_layout(
-        height=1100 if extra_indicator != "None" else 950,
-        template="plotly_dark",
-        showlegend=False,
-        paper_bgcolor="#0a0e17",
-        plot_bgcolor="#0a0e17",
-        font=dict(color="#e0e0e0"),
-        margin=dict(l=20, r=20, t=40, b=20)
-    )
-
-    return fig
 
 # === TRADINGVIEW CHART FUNCTION ===
 def tradingview_chart(ticker):
@@ -157,6 +98,82 @@ def tradingview_chart(ticker):
     </script>
     """
     html(tv_script, height=850)
+
+# === DYNAMIC GROK ANALYSIS FUNCTION ===
+def grok_analyze_chart(ticker):
+    hist, info = fetch_data(ticker)
+    if hist is None:
+        return "No data"
+
+    df = add_ta_indicators(hist.copy())
+    close = df["Close"].iloc[-1]
+    rsi = df["RSI"].iloc[-1]
+    bb_width = (df["BB_upper"] - df["BB_lower"]) / df["Close"]
+    bb_squeeze = bb_width.iloc[-1] < bb_width.mean() - bb_width.std()
+    macd_hist = df["MACD_hist"].iloc[-1]
+    macd_bull_cross = df["MACD_hist"].iloc[-1] > 0 and df["MACD_hist"].iloc[-2] <= 0
+    macd_bear_cross = df["MACD_hist"].iloc[-1] < 0 and df["MACD_hist"].iloc[-2] >= 0
+    price_near_bb_low = close <= df["BB_lower"].iloc[-1] * 1.02
+    price_near_bb_high = close >= df["BB_upper"].iloc[-1] * 0.98
+    vol_spike = df["Volume"].iloc[-1] > df["Volume"].rolling(20).mean().iloc[-1] * 1.5
+
+    # Dynamic edge scoring
+    edge_score = 50
+    if rsi < 35: edge_score += 25
+    if rsi > 65: edge_score -= 20
+    if bb_squeeze: edge_score += 30
+    if macd_bull_cross: edge_score += 20
+    if macd_bear_cross: edge_score -= 20
+    if price_near_bb_low: edge_score += 20
+    if price_near_bb_high: edge_score -= 15
+    if vol_spike: edge_score += 15
+
+    # Dynamic conviction
+    if edge_score >= 90:
+        conviction = "STRONG BUY"
+        color = "#00ff88"
+    elif edge_score >= 75:
+        conviction = "BUY"
+        color = "#00ff88"
+    elif edge_score >= 60:
+        conviction = "HOLD"
+        color = "#ffff00"
+    elif edge_score >= 40:
+        conviction = "SELL"
+        color = "#ff00ff"
+    else:
+        conviction = "STRONG SELL"
+        color = "#ff00ff"
+
+    # Dynamic target & stop
+    atr = (df["High"] - df["Low"]).rolling(14).mean().iloc[-1]
+    target = close + (atr * 3) if "BUY" in conviction else close - (atr * 3)
+    stop = close - (atr * 1.5) if "BUY" in conviction else close + (atr * 1.5)
+
+    # Dynamic thesis
+    thesis_parts = []
+    if bb_squeeze: thesis_parts.append("BB squeeze detected — volatility expansion imminent")
+    if rsi < 35: thesis_parts.append("RSI oversold — bounce likely")
+    if rsi > 65: thesis_parts.append("RSI overbought — pullback risk")
+    if macd_bull_cross: thesis_parts.append("MACD bullish cross — momentum shift")
+    if price_near_bb_low: thesis_parts.append("Price at BB lower — high-probability reversal zone")
+    if vol_spike: thesis_parts.append("Volume spike — institutional accumulation")
+
+    thesis = " • ".join(thesis_parts) if thesis_parts else "Consolidation phase — wait for breakout"
+
+    return {
+        "ticker": ticker,
+        "conviction": conviction,
+        "color": color,
+        "edge_score": edge_score,
+        "target": target,
+        "stop": stop,
+        "thesis": thesis,
+        "rsi": rsi,
+        "bb_squeeze": bb_squeeze,
+        "macd_bull_cross": macd_bull_cross,
+        "vol_spike": vol_spike
+    }
 
 # === PAGE ROUTING ===
 if page == "Home (v9 War Room)":
@@ -371,19 +388,20 @@ elif page == "Charting":
     tradingview_chart(ticker_input)
 
     if st.button("GROK ANALYZE THIS CHART", type="primary", use_container_width=True):
-        st.markdown(f"""
-        <div class='ai-report'>
-            <h2 style='color:#00ff88'>GROK-4 VERDICT: STRONG BUY</h2>
-            <h3>Edge Score: 95/100 • Target: $210</h3>
-            <p><strong>Catalyst:</strong> Blackwell AI chip ramp</p>
-            <p><strong>Risk:</strong> Supply chain volatility</p>
-            <p><strong>Thesis:</strong> BB squeeze complete, RSI oversold bounce, MACD bullish cross, volume spike on up days. Classic reversal setup. Buy dips under $175. PT $210+ if SPY holds $650.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.balloons()
+        with st.spinner("Grok is reading the tape..."):
+            analysis = grok_analyze_chart(ticker_input)
+            st.markdown(f"""
+            <div class='grok-analysis'>
+                <h2 style='color:{analysis['color']}'>GROK-4 VERDICT: {analysis['conviction']}</h2>
+                <h3>Edge Score: {analysis['edge_score']}/100 • Target: ${analysis['target']:.2f} • Stop: ${analysis['stop']:.2f}</h3>
+                <p><strong>Current Price:</strong> ${yf.Ticker(ticker_input).history(period="1d")['Close'].iloc[-1]:.2f} | <strong>RSI:</strong> {analysis['rsi']:.1f}</p>
+                <p><strong>Live Thesis:</strong> {analysis['thesis']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            st.balloons()
 
 else:
     st.header(page)
     st.info("Coming soon")
 
-st.success("Alpha Terminal v11 • Charting Tab LIVE • Full Terminal Preserved")
+st.success("Alpha Terminal v11.2 • Grok Analyze LIVE • Dynamic + Ticker-Specific")
