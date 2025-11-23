@@ -39,7 +39,7 @@ if 'ticker' not in st.session_state:
 ticker = st.session_state.ticker
 
 # === CORE FUNCTIONS ===
-@st.cache_data(ttl reclam=300)
+@st.cache_data(ttl=300)
 def fetch_data(ticker):
     try:
         t = yf.Ticker(ticker)
@@ -57,7 +57,7 @@ def add_ta_indicators(df, extra=None):
     df["BB_upper"] = bb.bollinger_hband()
     df["BB_lower"] = bb.bollinger_lband()
     macd = ta.trend.MACD(df["Close"])
-    df["MACD"] = mac  macd.macd()
+    df["MACD"] = macd.macd()
     df["MACD_signal"] = macd.macd_signal()
     df["MACD_hist"] = macd.macd_diff()
     if extra == "stoch":
@@ -140,8 +140,7 @@ def professional_chart(df, ticker, extra_indicator="None"):
 # === PAGE ROUTING ===
 if page == "Home (v9 War Room)":
     st.markdown("<h2 style='color:#00ff88'>Market War Room — Pure Intelligence</h2>", unsafe_allow_html=True)
-    # Your full v9 dashboard code here — unchanged
-    st.write("Your existing v9 dashboard goes here — unchanged")
+    st.write("Your full v9 dashboard code goes here — unchanged")
 
 elif page == "Dashboard":
     ticker = st.text_input("Ticker", value=ticker).upper()
@@ -184,7 +183,7 @@ elif page == "Portfolio":
         portfolio = pd.read_csv(uploaded)
         def get_price(t):
             try:
-                return yf.Ticker(t).history(period="1d")['Close'].iloc[-1]
+                return yf.Ticker t).history(period="1d")['Close'].iloc[-1]
             except:
                 return np.nan
         portfolio['current_price'] = portfolio['ticker'].apply(get_price)
