@@ -183,7 +183,7 @@ elif page == "Portfolio":
         portfolio = pd.read_csv(uploaded)
         def get_price(t):
             try:
-                return yf.Ticker t).history(period="1d")['Close'].iloc[-1]
+                return yf.Ticker(t).history(period="1d")['Close'].iloc[-1]
             except:
                 return np.nan
         portfolio['current_price'] = portfolio['ticker'].apply(get_price)
