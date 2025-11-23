@@ -4,5 +4,3 @@ pandas
 numpy
 plotly
 ta
-requests
-lightweight-charts-python==1.0.0
