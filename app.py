@@ -1,4 +1,4 @@
-# app.py — ALPHA TERMINAL v11 — FULL CODE + TRADINGVIEW "CHARTING" TAB + HOME PAGE RESTORED
+# app.py — ALPHA TERMINAL v11 — FULL CODE + TRADINGVIEW "CHARTING" TAB
 import streamlit as st
 from streamlit.components.v1 import html
 import yfinance as yf
@@ -24,7 +24,7 @@ st.markdown("""
 
 st.markdown("<h1>ALPHA TERMINAL v11</h1>", unsafe_allow_html=True)
 
-# === SINGLE SIDEBAR ===
+# === SINGLE SIDEBAR WITH "CHARTING" TAB ===
 st.sidebar.markdown("<h2 style='color:#00ffff'>Navigation</h2>", unsafe_allow_html=True)
 
 page = st.sidebar.radio(
@@ -77,7 +77,7 @@ def calculate_risk_metrics(df):
     var_95 = returns.quantile(0.05)
     return {"sharpe": round(sharpe, 2), "sortino": round(sortino, 2), "max_dd": round(max_dd, 2), "var_95": var_95}
 
-# === PROFESSIONAL CHART FUNCTION ===
+# === PROFESSIONAL PLOTLY CHART FUNCTION ===
 def professional_chart(df, ticker, extra_indicator="None"):
     rows = 5 if extra_indicator != "None" else 4
     heights = [0.55, 0.15, 0.15, 0.15, 0.15] if extra_indicator != "None" else [0.55, 0.15, 0.15, 0.15]
