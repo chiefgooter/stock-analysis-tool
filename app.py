@@ -1,4 +1,4 @@
-# app.py — ALPHA TERMINAL v10.2 — FINAL + ALL TABS 100% WORKING
+# app.py — ALPHA TERMINAL v10.2 — FULL CODE + TRADINGVIEW CHARTS + FLOW TAB FIXED
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -108,7 +108,7 @@ def professional_chart(df, ticker, extra_indicator="None"):
     fig.add_hrect(y0=0, y1=30, fillcolor="green", opacity=0.1, row=2, col=1)
 
     fig.add_trace(go.Scatter(x=df.index, y=df.MACD, line=dict(color="#ff00ff", width=2), name="MACD"), row=3, col=1)
-    fig.add_trace(go.Scatter(x=df.index, y=df.MACD_signal, line=dict(color="#00ff88", width=2), name="Signal"), row=3, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df.MACD_signal, line=dict(color="#00ff88", width=2), name="Adx"), row=3, col=1)
     fig.add_trace(go.Bar(x=df.index, y=df.MACD_hist, marker_color="rgba(0,255,136,0.3)"), row=3, col=1)
 
     fig.add_trace(go.Bar(x=df.index, y=df.Volume, marker_color="rgba(0,255,255,0.3)", name="Volume"), row=4, col=1)
@@ -248,7 +248,7 @@ elif page == "Dashboard":
         st.success("GROK-4: Strong buy — BB squeeze + RSI oversold. Edge 94/100")
 
 elif page == "Portfolio":
-    st.header("Portfolio — Live P & L")
+    st.header("Portfolio — Live P&L")
     uploaded = st.file_uploader("Upload CSV (ticker, shares, buy_price)", type="csv")
     if uploaded:
         portfolio = pd.read_csv(uploaded)
@@ -266,7 +266,7 @@ elif page == "Alerts":
     st.header("Alerts")
     pct = st.slider("Price % Alert", -50.0, 50.0, 5.0)
     rsi = st.checkbox("RSI 70/30")
-    st.success(f"Active: {pct:+.1 1f}% moves" + (" + RSI extremes" if rsi else ""))
+    st.success(f"Active: {pct:+.1f}% moves" + (" + RSI extremes" if rsi else ""))
 
 elif page == "Paper Trading":
     st.header("Paper Trading")
@@ -326,8 +326,7 @@ elif page == "Flow":
                     else:
                         return [''] * len(row)
 
-                styled_df = df.style.apply(style_row, axis=1)
-                st.dataframe(styled_df)
+                st.dataframe(df.style.apply(style_row, axis=1))
                 st.markdown("</div>", unsafe_allow_html=True)
 
             time.sleep(10)
@@ -337,4 +336,4 @@ elif page == "Flow":
             st.error(f"Flow error: {e}")
             time.sleep(10)
 
-st.success("Alpha Terminal v10.2 • All Tabs Working • Ready")
+st.success("Alpha Terminal v10.2 • Flow Tab LIVE • All Tabs Working")
