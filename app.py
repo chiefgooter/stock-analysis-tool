@@ -1,4 +1,4 @@
-# app.py — ALPHA TERMINAL v11.2 — FULL CODE + DYNAMIC GROK ANALYZE + ALL TABS WORKING
+# app.py — ALPHA TERMINAL v11.3 — FULL CODE + DYNAMIC GROK ANALYZE + TRADINGVIEW CHARTING TAB
 import streamlit as st
 from streamlit.components.v1 import html
 import yfinance as yf
@@ -10,7 +10,7 @@ import ta
 import time
 from datetime import datetime
 
-st.set_page_config(page_title="Alpha Terminal v11.2", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Alpha Terminal v11.3", layout="wide", initial_sidebar_state="expanded")
 
 # === PROFESSIONAL THEME ===
 st.markdown("""
@@ -19,10 +19,11 @@ st.markdown("""
     h1 { font-size: 5rem; text-align: center; background: linear-gradient(90deg, #00ff88, #00ffff, #ff00ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .stMetric > div { background: #1a1f2e; border-radius: 16px; padding: 20px; border: 1px solid #2d3748; }
     .grok-analysis { background: #1a1f2e; border: 4px solid #00ff88; border-radius: 20px; padding: 25px; margin: 20px 0; }
+    .flow-table { background: #1a1f2e; padding: 20px; border-radius: 16px; border: 2px solid #00ff88; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1>ALPHA TERMINAL v11.2</h1>", unsafe_allow_html=True)
+st.markdown("<h1>ALPHA TERMINAL v11.3</h1>", unsafe_allow_html=True)
 
 # === SINGLE SIDEBAR ===
 st.sidebar.markdown("<h2 style='color:#00ffff'>Navigation</h2>", unsafe_allow_html=True)
@@ -51,7 +52,7 @@ def fetch_data(ticker):
     except:
         return None, None
 
-def add_ta_indicators(df):
+def add_ta_indicators(df, extra=None):
     df["EMA20"] = ta.trend.EMAIndicator(df["Close"], window=20).ema_indicator()
     df["EMA50"] = ta.trend.EMAIndicator(df["Close"], window=50).ema_indicator()
     df["RSI"] = ta.momentum.RSIIndicator(df["Close"]).rsi()
@@ -62,6 +63,10 @@ def add_ta_indicators(df):
     df["MACD"] = macd.macd()
     df["MACD_signal"] = macd.macd_signal()
     df["MACD_hist"] = macd.macd_diff()
+    if extra == "stoch":
+        df["Stoch"] = ta.momentum.StochasticOscillator(df["High"], df["Low"], df["Close"]).stoch()
+    if extra == "adx":
+        df["ADX"] = ta.trend.ADXIndicator(df["High"], df["Low"], df["Close"]).adx()
     return df
 
 def calculate_risk_metrics(df):
@@ -73,8 +78,69 @@ def calculate_risk_metrics(df):
     var_95 = returns.quantile(0.05)
     return {"sharpe": round(sharpe, 2), "sortino": round(sortino, 2), "max_dd": round(max_dd, 2), "var_95": var_95}
 
-# === TRADINGVIEW CHART FUNCTION ===
-def tradingview_chart(ticker):
+# === PROFESSIONAL PLOTLY CHART FUNCTION ===
+def professional_chart(df, ticker, extra_indicator="None"):
+    rows = 5 if extra_indicator != "None" else 4
+    heights = [0.55, 0.15, 0.15, 0.15, 0.15] if extra_indicator != "None" else [0.55, 0.15, 0.15, 0.15]
+    fig = make_subplots(
+        rows=rows, cols=1,
+        shared_xaxes=True,
+        row_heights=heights,
+        vertical_spacing=0.02,
+        subplot_titles=(f"{ticker} — Professional Analysis", "RSI", "MACD", "Volume", extra_indicator if extra_indicator != "None" else "")
+    )
+
+    fig.add_trace(go.Candlestick(
+        x=df.index, open=df.Open, high=df.High, low=df.Low, close=df.Close,
+        name="Price",
+        increasing_line_color="#00ff88", decreasing_line_color="#ff00ff"
+    ), row=1, col=1)
+
+    fig.add_hline(y=df["Close"].iloc[-1], line=dict(color="#00ff88", width=2, dash="dot"), row=1, col=1)
+
+    fig.add_trace(go.Scatter(x=df.index, y=df.EMA20, line=dict(color="#00ffff", width=2), name="EMA20"), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df.EMA50, line=dict(color="#ff00ff", width=2), name="EMA50"), row=1, col=1)
+
+    fig.add_trace(go.Scatter(x=df.index, y=df.BB_upper, line=dict(color="#00ffff", width=1, dash="dot"), name="BB Upper"), row=1, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df.BB_lower, line=dict(color="#00ffff", width=1, dash="dot"), name="BB Lower",
+                             fill='tonexty', fillcolor='rgba(0,255,255,0.1)'), row=1, col=1)
+
+    fig.add_trace(go.Scatter(x=df.index, y=df.RSI, line=dict(color="#ffff00", width=2), name="RSI"), row=2, col=1)
+    fig.add_hrect(y0=70, y1=100, fillcolor="red", opacity=0.1, row=2, col=1)
+    fig.add_hrect(y0=0, y1=30, fillcolor="green", opacity=0.1, row=2, col=1)
+
+    fig.add_trace(go.Scatter(x=df.index, y=df.MACD, line=dict(color="#ff00ff", width=2), name="MACD"), row=3, col=1)
+    fig.add_trace(go.Scatter(x=df.index, y=df.MACD_signal, line=dict(color="#00ff88", width=2), name="Signal"), row=3, col=1)
+    fig.add_trace(go.Bar(x=df.index, y=df.MACD_hist, marker_color="rgba(0,255,136,0.3)"), row=3, col=1)
+
+    fig.add_trace(go.Bar(x=df.index, y=df.Volume, marker_color="rgba(0,255,255,0.3)", name="Volume"), row=4, col=1)
+
+    if extra_indicator == "Stoch":
+        fig.add_trace(go.Scatter(x=df.index, y=df.Stoch, line=dict(color="#ffaa00", width=2), name="Stoch"), row=5, col=1)
+    if extra_indicator == "ADX":
+        fig.add_trace(go.Scatter(x=df.index, y=df.ADX, line=dict(color="#ffaa00", width=2), name="ADX"), row=5, col=1)
+
+    fig.update_layout(
+        height=1100 if extra_indicator != "None" else 950,
+        template="plotly_dark",
+        showlegend=False,
+        paper_bgcolor="#0a0e17",
+        plot_bgcolor="#0a0e17",
+        font=dict(color="#e0e0e0"),
+        margin=dict(l=20, r=20, t=40, b=20)
+    )
+
+    return fig
+
+# === TRADINGVIEW CHART FUNCTION (WITH DYNAMIC INDICATORS) ===
+def tradingview_chart(ticker, show_rsi=True, show_macd=True, show_volume=True, show_stoch=False, show_adx=False):
+    studies = []
+    if show_rsi: studies.append("RSI@tv-basicstudies")
+    if show_macd: studies.append("MACD@tv-basicstudies")
+    if show_volume: studies.append("Volume@tv-basicstudies")
+    if show_stoch: studies.append("Stochastic@tv-basicstudies")
+    if show_adx: studies.append("ADX@tv-basicstudies")
+
     tv_script = f"""
     <div id="tv_chart" style="height: 800px; width: 100%;"></div>
     <script src="https://s3.tradingview.com/tv.js"></script>
@@ -92,7 +158,7 @@ def tradingview_chart(ticker):
       "locale": "en",
       "enable_publishing": false,
       "allow_symbol_change": true,
-      "studies": ["RSI@tv-basicstudies", "MACD@tv-basicstudies", "BB@tv-basicstudies", "Stochastic@tv-basicstudies"],
+      "studies": {studies},
       "show_popup_button": true
     }});
     </script>
@@ -117,7 +183,6 @@ def grok_analyze_chart(ticker):
     price_near_bb_high = close >= df["BB_upper"].iloc[-1] * 0.98
     vol_spike = df["Volume"].iloc[-1] > df["Volume"].rolling(20).mean().iloc[-1] * 1.5
 
-    # Dynamic edge scoring
     edge_score = 50
     if rsi < 35: edge_score += 25
     if rsi > 65: edge_score -= 20
@@ -128,7 +193,6 @@ def grok_analyze_chart(ticker):
     if price_near_bb_high: edge_score -= 15
     if vol_spike: edge_score += 15
 
-    # Dynamic conviction
     if edge_score >= 90:
         conviction = "STRONG BUY"
         color = "#00ff88"
@@ -145,12 +209,10 @@ def grok_analyze_chart(ticker):
         conviction = "STRONG SELL"
         color = "#ff00ff"
 
-    # Dynamic target & stop
     atr = (df["High"] - df["Low"]).rolling(14).mean().iloc[-1]
     target = close + (atr * 3) if "BUY" in conviction else close - (atr * 3)
     stop = close - (atr * 1.5) if "BUY" in conviction else close + (atr * 1.5)
 
-    # Dynamic thesis
     thesis_parts = []
     if bb_squeeze: thesis_parts.append("BB squeeze detected — volatility expansion imminent")
     if rsi < 35: thesis_parts.append("RSI oversold — bounce likely")
@@ -385,7 +447,16 @@ elif page == "Charting":
     st.markdown("Full TradingView experience — 100+ indicators, drawing tools, real-time")
 
     ticker_input = st.text_input("Enter Ticker", value="NVDA", key="charting_ticker").upper()
-    tradingview_chart(ticker_input)
+
+    # Indicator toggles
+    col1, col2, col3, col4, col5 = st.columns(5)
+    show_rsi = col1.checkbox("RSI", value=True)
+    show_macd = col2.checkbox("MACD", value=True)
+    show_volume = col3.checkbox("Volume", value=True)
+    show_stoch = col4.checkbox("Stochastic", value=False)
+    show_adx = col5.checkbox("ADX", value=False)
+
+    tradingview_chart(ticker_input, show_rsi, show_macd, show_volume, show_stoch, show_adx)
 
     if st.button("GROK ANALYZE THIS CHART", type="primary", use_container_width=True):
         with st.spinner("Grok is reading the tape..."):
@@ -404,4 +475,4 @@ else:
     st.header(page)
     st.info("Coming soon")
 
-st.success("Alpha Terminal v11.2 • Grok Analyze LIVE • Dynamic + Ticker-Specific")
+st.success("Alpha Terminal v11.2 • Dynamic Grok Analyze • All Tabs Live • Ready")
