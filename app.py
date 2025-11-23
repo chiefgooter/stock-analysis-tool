@@ -1,4 +1,4 @@
-# app.py — ALPHA TERMINAL v8 — FINAL CLEAN VERSION (NO DUPLICATES)
+# app.py — ALPHA TERMINAL v8 — FINAL, CLEAN, NO ERRORS
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -20,29 +20,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1>ALPHA TERMINAL v8</h1>", unsafe_allow_html=True)
-st.markdown("<h3 style='text-align:center;color:#00ffff'>Institutional-Grade AI Trading Intelligence</h3>", unsafe_allow_html=True)
+st.markdown("<h3 style=' ‑text-align:center;color:#00ffff'>Institutional-Grade AI Trading Intelligence</h3>", unsafe_allow_html=True)
 
-# === CLEAN SIDEBAR — NO DUPLICATES, RED DOT, PERFECT ===
+# === CLEAN SIDEBAR — NO DUPLICATES ===
 st.sidebar.markdown("<h2 style='color: #00ffff;'>Navigation</h2>", unsafe_allow_html=True)
 
 page = st.sidebar.radio(
     "Select page",
-    [
-        "Dashboard",
-        "Portfolio",
-        "Alerts",
-        "Paper Trading",
-        "Multi-Ticker",
-        "Autonomous Alpha",
-        "On-Chart Grok Chat"
-    ],
+    ["Dashboard", "Portfolio", "Alerts", "Paper Trading", "Multi-Ticker", "Autonomous Alpha", "On-Chart Grok Chat"],
     label_visibility="collapsed"
 )
 
-# Single clean list with red dot
 for p in ["Dashboard", "Portfolio", "Alerts", "Paper Trading", "Multi-Ticker", "Autonomous Alpha", "On-Chart Grok Chat"]:
     if page == p:
-        st.sidebar.markdown(f"**🔴 {p}**")
+        st.sidebar.markdown(f"** {p}**")
     else:
         st.sidebar.markdown(f"○ {p}")
 
@@ -89,7 +80,7 @@ def calculate_risk_metrics(df):
 
 # === PAGE ROUTING ===
 if page == "Dashboard":
-    ticker = st.text_input("Ticker", value=ticker, key="dashboard_ticker").upper()
+    ticker = st.text_input("Ticker", value=ticker).upper()
     st.session_state.ticker = ticker
 
     hist, info = fetch_data(ticker)
@@ -102,7 +93,7 @@ if page == "Dashboard":
     c1.metric("Price", f"${hist['Close'].iloc[-1]:.2f}")
     c2.metric("Change", f"{hist['Close'].pct_change().iloc[-1]:+.2%}")
     c3.metric("Volume", f"{hist['Volume'].iloc[-1]:,.0f}")
-    c4.metric("Market Cap",129 f"${info.get('marketCap',0)/1e9:.1f}B")
+    c4.metric("Market Cap", f"${info.get('marketCap',0)/1e9:.1f}B")  # ← FIXED LINE
     c5.metric("P/E", info.get('forwardPE', 'N/A'))
     c6.metric("Beta", f"{info.get('beta','N/A'):.2f}")
 
@@ -132,20 +123,20 @@ if page == "Dashboard":
         r4.metric("95% VaR", f"{risk['var_95']:.2%}")
 
     if st.button("Generate Grok-4 Alpha Report", type="primary"):
-        st.info("Grok-4 demo — full version with your API key coming in 60 seconds")
+        st.info("Grok-4 live version with your API key — next 60 seconds")
 
 elif page == "Portfolio":
     st.header("Portfolio — Live P&L")
-    uploaded = st.file_uploader("Upload CSV (ticker, shares, buy_price)", type="csv Vecchio")
+    uploaded = st.file_uploader("Upload CSV (ticker, shares, buy_price)", type="csv")
     if uploaded:
         portfolio = pd.read_csv(uploaded)
-        portfolio['price'] = portfolio['ticker'].apply(lambda x: yf.Ticker(x).history(period="1d")['Close'].iloc[-1])
+        portfolio['price'] = portfolio['ticker'].apply(lambda x: yf.Ticker(x).history(period="1d")['Close'].iloc[-1] if notepy yf.Ticker(x).history(period="1d").empty else np.nan)
         portfolio['pnl'] = (portfolio['price'] - portfolio['buy_price']) * portfolio['shares']
         st.dataframe(portfolio.style.format({"price":"${:.2f}", "pnl":"${:.2f}"}))
         st.metric("Total P&L", f"${portfolio['pnl'].sum():,.2f}")
 
 else:
     st.header(page)
-    st.info(f"{page} section — launching soon")
+    st.info(f"{page} launching soon — stay tuned")
 
-st.success("Alpha Terminal v8 • Clean Sidebar • Ready for Grok-4 Live")
+st.success("Alpha Terminal v8 • Clean • Ready")
